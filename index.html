@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBD Ayay aku</title>
+    <style>
+        /* CSS UNTUK TAMPILAN */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+
+        #overlay {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none; /* Supaya tidak menghalangi klik ke orbit */
+            width: 90%;
+        }
+
+        h1 { 
+            font-size: 1.8rem; 
+            letter-spacing: 2px; 
+            text-shadow: 0 0 15px #ff0000; 
+            margin: 0; 
+        }
+
+        p { font-size: 0.8rem; opacity: 0.7; margin-top: 10px; }
+
+        /* TOMBOL MUSIK - Dipastikan di paling depan */
+        #music-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999; /* Angka tertinggi agar selalu di depan */
+            padding: 15px 30px;
+            background: #ff1111;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 17, 17, 0.5);
+            pointer-events: auto; /* Memastikan area ini bisa menerima klik */
+            transition: all 0.3s ease;
+        }
+
+        #music-btn:active {
+            transform: translateX(-50%) scale(0.9);
+        }
+
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1>Happy Birthday Sayangkuuu</h1>
+        <p>Gunakan jari/mouse untuk memutar galaksi kenangan</p>
+    </div>
+
+    <button id="music-btn">Mulai Musik ✨</button>
+
+    <audio id="mySong" loop>
+        <source src="P.S. I LOVE YOU.mp3" type="audio/mp3">
+    </audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, controls, heartPoints;
+        let photoPlanets = [];
+        const clock = new THREE.Clock();
+
+        // --- KONFIGURASI FOTO ---
+        // Ganti nama file di bawah ini sesuai dengan file foto di foldermu
+        const photoFiles = [
+            'foto1.jpg', 
+            'foto2.jpg', 
+            'foto3.jpg', 
+            'foto4.jpg', 
+            'foto5.jpg',
+            'foto6.jpg',
+            'foto7.jpg',
+            'foto8.jpg',
+            'foto9.jpg',
+            'foto10.jpg',
+            'foto11.jpg',
+            'foto12.jpg',
+            'foto13.jpg',
+            'foto14.jpg',
+            'foto15.jpg',
+            'foto16.jpg',
+            'foto17.jpg',
+            'foto18.jpg',
+            'foto19.jpg',
+            'foto20.jpg',
+            'foto21.jpg',
+            'foto22.jpg',
+            'foto23.jpg',
+            'foto24.jpg',
+            'foto25.jpg',
+            'foto26.jpg',
+            'foto27.jpg',
+            'foto28.jpg',
+            'foto29.jpg',
+            'foto30.jpg',
+            'foto31.jpg',
+            'foto32.jpg',
+            'foto33.jpg',
+            'foto34.jpg',
+            'foto35.jpg',
+            'foto36.jpg',
+            'foto37.jpg',
+            'foto38.jpg',
+            'foto39.jpg',
+            'foto40.jpg',
+            'foto41.jpg',
+            'foto42.jpg',
+            'foto43.jpg',
+            'foto44.jpg',
+            'foto45.jpg',
+            'foto46.jpg',
+            'foto47.jpg',
+            'foto48.jpg',
+            'foto49.jpg',
+            'foto50.jpg',
+            'foto1.jpg', 
+            'foto2.jpg', 
+            'foto3.jpg', 
+            'foto4.jpg', 
+            'foto5.jpg',
+            'foto6.jpg',
+            'foto7.jpg',
+            'foto8.jpg',
+            'foto9.jpg',
+            'foto10.jpg',
+            'foto11.jpg',
+            'foto12.jpg',
+            'foto13.jpg',
+            'foto14.jpg',
+            'foto15.jpg',
+            'foto16.jpg',
+            'foto17.jpg',
+            'foto18.jpg',
+            'foto19.jpg',
+            'foto20.jpg',
+            'foto21.jpg',
+            'foto22.jpg',
+            'foto23.jpg',
+            'foto24.jpg',
+            'foto25.jpg',
+            'foto26.jpg',
+            'foto27.jpg',
+            'foto28.jpg',
+            'foto29.jpg',
+            'foto30.jpg',
+            'foto31.jpg',
+            'foto32.jpg',
+            'foto33.jpg',
+            'foto34.jpg',
+            'foto35.jpg',
+            'foto36.jpg',
+            'foto37.jpg',
+            'foto38.jpg',
+            'foto39.jpg',
+            'foto40.jpg',
+            'foto41.jpg',
+            'foto42.jpg',
+            'foto43.jpg',
+            'foto44.jpg',
+            'foto45.jpg',
+            'foto46.jpg',
+            'foto47.jpg',
+            'foto48.jpg',
+            'foto49.jpg',
+            'foto50.jpg',
+        ];
+
+        function init() {
+            // 1. Scene & Camera
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 15, 65);
+
+            // 2. Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // 3. Orbit Controls (Supaya bisa diputar)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enablePan = false;
+
+            // 4. Latar Bintang
+            createStars();
+
+            // 5. Inti Hati Merah
+            createHeart();
+
+            // 6. Foto-Foto Orbit
+            createSatellites();
+
+            // 7. Cahaya
+            const light = new THREE.AmbientLight(0xffffff, 1);
+            scene.add(light);
+
+            animate();
+        }
+
+        function createStars() {
+            const geo = new THREE.BufferGeometry();
+            const positions = [];
+            for(let i=0; i<8000; i++) {
+                positions.push((Math.random()-0.5)*1000, (Math.random()-0.5)*1000, (Math.random()-0.5)*1000);
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6 });
+            scene.add(new THREE.Points(geo, mat));
+        }
+
+        function createHeart() {
+            const points = [];
+            const numPoints = 6000; // Jumlah titik diperbanyak agar sangat padat
+
+            for (let i = 0; i < numPoints; i++) {
+                // Sebarkan t dari 0 sampai 2*PI
+                const t = (i / numPoints) * Math.PI * 2;
+                
+                // Rumus matematika bentuk hati
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                
+                // Tambahkan sedikit efek acak (noise) agar hati terlihat berisi (3D), bukan cuma garis
+                const randomSpread = (Math.random() - 0.5) * 4; 
+                const z = (Math.random() - 0.5) * 8; 
+
+                // Kalikan dengan 0.8 untuk menyesuaikan skala
+                points.push((x * 0.8) + (Math.random() - 0.5), (y * 0.8) + (Math.random() - 0.5), z);
+            }
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+            
+            // Material dengan efek cahaya (AdditiveBlending)
+            const mat = new THREE.PointsMaterial({ 
+                color: 0xff0000, 
+                size: 0.9,           // Ukuran titik sedikit diperbesar
+                transparent: true, 
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending // Membuat titik yang bertumpuk jadi lebih terang
+            });
+
+            heartPoints = new THREE.Points(geo, mat);
+            scene.add(heartPoints);
+        }
+
+function createSatellites() {
+            const loader = new THREE.TextureLoader();
+            photoFiles.forEach((file, i) => {
+                const geometry = new THREE.PlaneGeometry(12, 12); // Ukuran foto sedikit diperbesar
+                const material = new THREE.MeshBasicMaterial({ 
+                    map: loader.load(file), 
+                    side: THREE.DoubleSide,
+                    transparent: true 
+                });
+                const plane = new THREE.Mesh(geometry, material);
+
+                // --- LOGIKA PENYEBARAN EKSTRIM ---
+                plane.userData = {
+                    angle: (i / photoFiles.length) * Math.PI * 2, // Posisi awal melingkar
+                    speed: 0.1 + (Math.random() * 0.10),          // Kecepatan berbeda-beda
+                    radius: 40 + (Math.random() * 150),            // RADIUS LEBIH JAUH (40 sampai 90)
+                    heightVar: (Math.random() - 0.5) * 10,        // VARIASI TINGGI (Naik turun lebih jauh)
+                    tilt: (Math.random() - 0.5) * 3             // KEMIRINGAN ORBIT
+                };
+
+                scene.add(plane);
+                photoPlanets.push(plane);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Efek berdenyut pada hati
+            const s = 1 + Math.sin(time * 2) * 0.1;
+            heartPoints.scale.set(s, s, s);
+            heartPoints.rotation.y += 0.002;
+
+            // Gerakan Satelit mengelilingi hati (Lebih Menyebar)
+            photoPlanets.forEach(p => {
+                const d = p.userData;
+                const currentAngle = d.angle + (time * d.speed);
+                
+                // Orbit melingkar di sumbu X dan Z
+                p.position.x = Math.cos(currentAngle) * d.radius;
+                p.position.z = Math.sin(currentAngle) * d.radius;
+                
+                // Sumbu Y (Tinggi) dibuat lebih bervariasi agar menyebar ke atas dan bawah
+                p.position.y = (Math.sin(currentAngle) * d.tilt * 70) + d.heightVar;
+                
+                // Foto selalu menghadap kamera agar tidak terlihat gepeng
+                p.lookAt(camera.position);
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- LOGIKA KLIK MUSIK ---
+        const btn = document.getElementById("music-btn");
+        const audio = document.getElementById("mySong");
+
+        btn.addEventListener("click", () => {
+            if (audio.paused) {
+                audio.play();
+                btn.innerHTML = "Lagu Diputar 🎵";
+                btn.style.background = "rgba(255, 255, 255, 0.2)";
+            } else {
+                audio.pause();
+                btn.innerHTML = "Mulai Musik ✨";
+                btn.style.background = "#ff1111";
+            }
+        });
+
+        // Responsif layar
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Jalankan program
+        init();
+    </script>
+</body>
+</html>
